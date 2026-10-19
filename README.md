@@ -7,83 +7,15 @@ An empirical evaluation framework designed to systematically quantify Large Lang
 
 This repository is kept minimal and self-contained:
 
-```text
+
 quantifying-llms/
 ├── quantification_experiments.ipynb  # Primary Colab notebook with end-to-end evaluation pipeline
 ├── dataset.csv                       # Prompt evaluation dataset / benchmark corpus
 └── README.md                         # Project documentation and quick start
 
-Theoretical Framework & Metric Quantification
-Large Language Model quantification requires moving past standard aggregate benchmark accuracies to evaluate fine-grained probabilistic confidence, informational efficiency, and runtime hardware behavior. Our evaluation pipeline assesses generation dynamics across four core dimensions: predictive dispersion, local information density, sequence-level fit, and autoregressive decoding throughput.
-Predictive dispersion is captured via sequence-level Shannon Entropy, calculated across the complete vocabulary space at each generation step:
-H(X)=− 
-i=1
-∑
-∣V∣
-​	
- P(w 
-i
-​	
- )log 
-2
-​	
- P(w 
-i
-​	
- )
-This formulation quantifies the distribution spread in bits (shannons). Elevated entropy values reflect diffuse probability allocations across multiple candidate tokens—indicating model indecision, exploration regimes, or ambiguous context—while localized, low entropy signatures confirm sharp concentration on single deterministic outputs.
-To assess local transition anomalies, the framework tracks Token-Level Surprisal, defined as the self-information of an observed target token conditioned on historical context:
-I(w 
-t
-​	
- )=−log 
-2
-​	
- P(w 
-t
-​	
- ∣w 
-<t
-​	
- )
-Surprisal directly indexes the information density of each generation step. Smooth, anticipated sequences sustain near-zero surprisal values, whereas abrupt divergence, syntactic breakdowns, and factual hallucinations register as high-magnitude surprisal spikes.
-Overall sequence modeling competence is formalized through Perplexity (PPL), evaluated as the exponentiated mean negative log-likelihood over a window of length N:
-PPL=exp(L 
-CE
-​	
- )=exp(− 
-N
-1
-​	
-  
-t=1
-∑
-N
-​	
- lnP(w 
-t
-​	
- ∣w 
-<t
-​	
- ))
-Perplexity establishes the effective geometric branching factor of the autoregressive distribution, representing the equivalent number of uniform candidate choices the model navigates at each decision boundary.
-Finally, hardware efficiency is quantified via Inference Latency, isolated to the token generation loop:
-τ 
-gen
-​	
- = 
-L 
-generated
-​	
- 
-t 
-total
-​	
- −t 
-prefill
-​	
- 
-​	
- 
-By factoring out prompt prefill time, this metric computes pure decoding latency in milliseconds per token (ms/token), providing a hardware-grounded profile of memory bandwidth saturation and autoregressive efficiency across varied sequence lengths and batch dimensions.
+Theoretical Framework and Empirical Metric Suite
+Evaluating Large Language Models requires looking beyond simple task accuracy to analyze the confidence of their probabilistic predictions, information density, and real-time execution overhead. This evaluation suite profiles generative behavior across four core dimensions: predictive dispersion, local unexpectedness, sequence modeling fit, and hardware decoding throughput.
+Predictive dispersion is measured via Shannon Entropy across the entire vocabulary at each decoding step. Expressed in bits, it captures how evenly or sharply the model distributes its probability mass. A high entropy value indicates that the model is dividing its confidence among multiple competing candidate tokens, pointing to ambiguity or generative indecision. Conversely, low entropy signifies sharp confidence, where the model concentrates almost all probability onto a single deterministic output.
+To isolate local transitions and deviations, the framework evaluates Token-Level Surprisal. Surprisal measures the self-information or unexpectedness of a specific target token given the preceding context. In stable, expected phrasing, surprisal remains low. When the model encounters anomalous syntax, hallucinated claims, or sudden out-of-context shifts, surprisal spikes sharply, serving as an effective diagnostic for local degeneration and sequence-level divergence.
+Overall sequence quality is captured using Perplexity. Perplexity represents the exponentiated average negative log-likelihood across evaluated tokens. In practical terms, it acts as the effective branching factor of the model, representing the weighted average number of equally likely tokens between which the model must decide at every generation step. Lower perplexity reflects a model distribution that closely matches the target data manifold.
+Operational efficiency is assessed using Inference Latency, specifically isolated to the active generation phase. By separating prompt prefill time from autoregressive decoding, this metric isolates the exact duration required to produce each token in milliseconds. This directly reflects how effectively an architecture utilizes memory bandwidth and computational hardware under diverse batch sizes and prompt lengths.
