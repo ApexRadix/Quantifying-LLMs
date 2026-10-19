@@ -2,7 +2,6 @@
 
 An empirical evaluation framework designed to systematically quantify Large Language Models across predictive uncertainty, token-level entropy distributions, latency scaling, and behavioral consistency.
 
-
 ## Repository Files
 
 This repository is kept minimal and self-contained:
