@@ -13,11 +13,77 @@ quantifying-llms/
 ├── dataset.csv                       # Prompt evaluation dataset / benchmark corpus
 └── README.md                         # Project documentation and quick start
 
-## Core Metrics Computed
-
-| Metric | Mathematical Formulation | Description & Practical Interpretation |
-| :--- | :--- | :--- |
-| **Shannon Entropy** | $$H(X) = -\sum_{i=1}^{|V|} P(w_i) \log_2 P(w_i)$$ | Measures the flat dispersion and predictive uncertainty across the full vocabulary $|V|$ at a specific token step. Higher entropy indicates the model is uncertain or sampling from multiple viable candidates, while lower entropy indicates sharp confidence in a single output token. Expressed in bits (shannons). |
-| **Token Surprisal** | $$I(w_t) = -\log_2 P(w_t \mid w_{<t})$$ | Quantifies the information content or "unexpectedness" of a specific target token $w_t$ given the preceding context $w_{<t}$. Highly anticipated tokens yield near-zero surprisal, whereas unexpected transitions or hallucinations produce sharp spikes in bit values. |
-| **Perplexity (PPL)** | $$\text{PPL} = \exp\left( \mathcal{L}_{\text{CE}} \right) = \exp\left( -\frac{1}{N} \sum_{t=1}^N \ln P(w_t \mid w_{<t}) \right)$$ | Computes the exponentiated average negative log-likelihood over a sequence of length $N$. Intuitively represents the effective branching factor, or the weighted average number of equally likely tokens the model is choosing between at each step. Lower perplexity reflects superior generative model fit. |
-| **Inference Latency** | $$\tau_{\text{gen}} = \frac{t_{\text{total}} - t_{\text{prefill}}}{L_{\text{generated}}}$$ | Measures decoding speed in milliseconds per token ($\text{ms/token}$) during the autoregressive generation phase, isolated from prompt prefill latency. Evaluates real-time decoding efficiency and hardware throughput across batch sizes and context lengths. |
+Theoretical Framework & Metric Quantification
+Large Language Model quantification requires moving past standard aggregate benchmark accuracies to evaluate fine-grained probabilistic confidence, informational efficiency, and runtime hardware behavior. Our evaluation pipeline assesses generation dynamics across four core dimensions: predictive dispersion, local information density, sequence-level fit, and autoregressive decoding throughput.
+Predictive dispersion is captured via sequence-level Shannon Entropy, calculated across the complete vocabulary space at each generation step:
+H(X)=− 
+i=1
+∑
+∣V∣
+​	
+ P(w 
+i
+​	
+ )log 
+2
+​	
+ P(w 
+i
+​	
+ )
+This formulation quantifies the distribution spread in bits (shannons). Elevated entropy values reflect diffuse probability allocations across multiple candidate tokens—indicating model indecision, exploration regimes, or ambiguous context—while localized, low entropy signatures confirm sharp concentration on single deterministic outputs.
+To assess local transition anomalies, the framework tracks Token-Level Surprisal, defined as the self-information of an observed target token conditioned on historical context:
+I(w 
+t
+​	
+ )=−log 
+2
+​	
+ P(w 
+t
+​	
+ ∣w 
+<t
+​	
+ )
+Surprisal directly indexes the information density of each generation step. Smooth, anticipated sequences sustain near-zero surprisal values, whereas abrupt divergence, syntactic breakdowns, and factual hallucinations register as high-magnitude surprisal spikes.
+Overall sequence modeling competence is formalized through Perplexity (PPL), evaluated as the exponentiated mean negative log-likelihood over a window of length N:
+PPL=exp(L 
+CE
+​	
+ )=exp(− 
+N
+1
+​	
+  
+t=1
+∑
+N
+​	
+ lnP(w 
+t
+​	
+ ∣w 
+<t
+​	
+ ))
+Perplexity establishes the effective geometric branching factor of the autoregressive distribution, representing the equivalent number of uniform candidate choices the model navigates at each decision boundary.
+Finally, hardware efficiency is quantified via Inference Latency, isolated to the token generation loop:
+τ 
+gen
+​	
+ = 
+L 
+generated
+​	
+ 
+t 
+total
+​	
+ −t 
+prefill
+​	
+ 
+​	
+ 
+By factoring out prompt prefill time, this metric computes pure decoding latency in milliseconds per token (ms/token), providing a hardware-grounded profile of memory bandwidth saturation and autoregressive efficiency across varied sequence lengths and batch dimensions.
